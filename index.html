@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>ExaGrid Tiered Backup Storage for Rubrik Environments</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,700;9..40,800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--ny:#0a1628;--ny2:#0f1f38;--ny3:#162a4a;--sf:#111c30;--tl:#14b8a6;--gn:#10b981;--rd:#ef4444;--am:#f59e0b;--bl:#3b82f6;--t:#e2e8f0;--t2:#94a3b8;--t3:#64748b;--t4:#475569;--bd:#1e293b;--bd2:#334155;--f:'DM Sans',system-ui,sans-serif;--m:'JetBrains Mono',monospace;--tg:rgba(20,184,166,.1)}
+html{font-size:15px;scroll-behavior:smooth}
+body{background:var(--ny);color:var(--t);font-family:var(--f);line-height:1.6}
+a{color:var(--tl);text-decoration:none}
+.ctr{max-width:1200px;margin:0 auto;padding:0 24px}
+h2{font-size:1.8rem;font-weight:800;margin-bottom:.5rem}
+h3{font-size:1.1rem;font-weight:700}
+p{color:var(--t2)}
+.sec{padding:60px 0;border-top:1px solid var(--bd)}
+input[type=range]{-webkit-appearance:none;width:100%;height:6px;border-radius:3px;background:var(--ny3);outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--tl);border:2px solid var(--ny);cursor:pointer;box-shadow:0 0 8px rgba(20,184,166,.4)}
+input[type=number]{font-family:var(--m);background:var(--ny3);border:1px solid var(--bd);color:var(--tl);padding:6px 10px;border-radius:6px;text-align:right;width:110px;font-size:.85rem;outline:none}
+input[type=number]:focus{border-color:var(--tl);box-shadow:0 0 0 2px rgba(20,184,166,.15)}
+select{font-family:var(--f);background:var(--ny3);border:1px solid var(--bd);color:var(--t);padding:6px 10px;border-radius:6px;font-size:.85rem;outline:none}
+button{font-family:var(--f);cursor:pointer;border:none;outline:none;transition:all .15s}
+
+/* NAV */
+nav{background:var(--sf);border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:100;backdrop-filter:blur(16px)}
+nav .inner{display:flex;align-items:center;justify-content:space-between;padding:12px 0;gap:12px;flex-wrap:wrap}
+.nbrand{display:flex;align-items:center;gap:10px}
+.nmark{width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,var(--tl),var(--gn));display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.7rem;color:var(--ny)}
+.nbrand h1{font-size:.88rem;font-weight:700;color:#fff}
+.nbrand span{font-size:.65rem;color:var(--t3);display:block}
+.nlinks{display:flex;gap:2px;flex-wrap:wrap}
+.nlinks a{font-size:.7rem;font-weight:600;color:var(--t3);padding:5px 10px;border-radius:5px;text-decoration:none}
+.nlinks a:hover{color:var(--tl);background:var(--tg)}
+.nbadge{font-size:.62rem;background:var(--tg);color:var(--tl);padding:4px 10px;border-radius:20px;border:1px solid rgba(20,184,166,.2);font-weight:600}
+
+/* HERO */
+.hero{padding:72px 0 56px;text-align:center;background:linear-gradient(180deg,var(--ny),var(--ny2))}
+.hero h2{font-size:2.4rem;color:#fff;max-width:780px;margin:0 auto .5rem}
+.hero .sub{font-size:1.1rem;color:var(--tl);font-weight:500;margin-bottom:.8rem}
+.hero>p{max-width:660px;margin:0 auto;font-size:.92rem}
+.hstats{display:flex;justify-content:center;gap:36px;margin-top:32px;flex-wrap:wrap}
+.hstat .num{font-size:2rem;font-weight:800;font-family:var(--m)}
+.hstat .lbl{font-size:.7rem;color:var(--t3);text-transform:uppercase;letter-spacing:.08em}
+
+/* GRIDS */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+@media(max-width:900px){.g2,.g3,.g4,.cg3,.cg12{grid-template-columns:1fr}}
+.card{background:var(--ny2);border:1px solid var(--bd);border-radius:12px;padding:20px}
+.card:hover{border-color:var(--bd2)}
+.tag{display:inline-block;font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;padding:3px 8px;border-radius:4px;margin-bottom:6px}
+
+/* ARCH */
+.arch{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;padding:28px 0}
+.abox{padding:18px 22px;border-radius:12px;text-align:center;min-width:170px}
+.abox.rb{background:var(--ny3);border:1px solid var(--bd2)}
+.abox.eg{background:linear-gradient(135deg,rgba(20,184,166,.08),rgba(16,185,129,.04));border:1px solid rgba(20,184,166,.2)}
+.abox h4{font-size:.82rem;font-weight:700;margin-bottom:4px}
+.abox p{font-size:.72rem;color:var(--t3)}
+.aarr{font-size:1.4rem;color:var(--tl)}
+.atier{display:inline-block;font-size:.68rem;padding:3px 9px;border-radius:4px;margin:2px}
+.atier.lz{background:var(--tl);color:var(--ny)}.atier.rt{background:var(--ny3);color:var(--t2);border:1px solid var(--bd2)}
+
+/* CMP TABLE */
+.ctbl{width:100%;border-collapse:collapse;font-size:.8rem}
+.ctbl th{padding:10px 14px;text-align:left;font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);background:var(--ny3);border-bottom:2px solid var(--bd)}
+.ctbl td{padding:9px 14px;border-bottom:1px solid var(--bd);color:var(--t2)}
+.ctbl td:first-child{font-weight:600;color:var(--t)}
+.ctbl tr:hover td{background:rgba(20,184,166,.02)}
+.ck{color:var(--gn);font-weight:700}.cx{color:var(--rd);font-weight:700}.cw{color:var(--am);font-weight:700}
+
+/* SEC GRID */
+.sgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:6px}
+.sitem{display:flex;align-items:center;gap:7px;font-size:.76rem;color:var(--t2);padding:7px 10px;background:var(--ny3);border-radius:7px;border:1px solid var(--bd)}
+.sitem .si{color:var(--gn);font-weight:700}
+
+/* STATS */
+.srow{display:flex;gap:14px;flex-wrap:wrap}
+.scard{flex:1;min-width:110px;background:var(--ny3);border:1px solid var(--bd);border-radius:10px;padding:14px;text-align:center}
+.scard.tl{border-color:rgba(20,184,166,.2)}
+.scard .sv{font-size:1.6rem;font-weight:800;font-family:var(--m);color:var(--tl)}
+.scard .sl{font-size:.65rem;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-top:2px}
+.scard .ss{font-size:.68rem;color:var(--t4);margin-top:4px}
+
+/* CTA */
+.cta{text-align:center;padding:64px 0}
+.steps{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;max-width:880px;margin:0 auto}
+.step{flex:1;min-width:170px;background:var(--ny2);border:1px solid var(--bd);border-radius:12px;padding:18px;text-align:center}
+.stepn{width:34px;height:34px;border-radius:50%;background:var(--tl);color:var(--ny);font-weight:800;font-size:.85rem;display:inline-flex;align-items:center;justify-content:center;margin-bottom:8px}
+.step h4{font-size:.82rem;color:var(--tl);margin-bottom:4px}
+.step p{font-size:.72rem;color:var(--t3)}
+footer{text-align:center;padding:28px 0;font-size:.68rem;color:var(--t4);border-top:1px solid var(--bd)}
+
+/* CALC */
+#cbox{background:var(--sf);border:1px solid var(--bd);border-radius:14px;overflow:hidden}
+.chdr{background:var(--ny2);padding:14px 20px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.ctabs{display:flex;gap:2px}
+.ctab{padding:7px 14px;font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;border-radius:5px 5px 0 0;background:transparent;color:var(--t3)}
+.ctab:hover{color:var(--t2)}.ctab.on{background:var(--sf);color:var(--tl);border-top:2px solid var(--tl)}
+.cbody{padding:20px}
+.cban{background:linear-gradient(135deg,var(--ny2),var(--ny3));border:1px solid var(--bd);border-radius:10px;padding:16px 20px;margin-bottom:16px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px}
+.cbsav{font-size:1.8rem;font-weight:800;background:linear-gradient(135deg,var(--tl),var(--gn));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.cbl{font-size:.6rem;text-transform:uppercase;letter-spacing:.1em;color:var(--t3);margin-bottom:2px}
+.cbvs{display:flex;gap:20px;align-items:center}
+.cbvs .n{font-size:1rem;font-weight:700;font-family:var(--m)}
+.cbvs .l{font-size:.6rem;color:var(--t3)}
+.cbp{text-align:center;padding:8px 14px;background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.12);border-radius:8px}
+.cbp .n{font-size:1.3rem;font-weight:800;color:var(--gn)}.cbp .l{font-size:.55rem;color:var(--gn);text-transform:uppercase;letter-spacing:.08em}
+.cg3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.cg12{display:grid;grid-template-columns:4fr 8fr;gap:18px}
+.cc{background:var(--ny2);border:1px solid var(--bd);border-radius:8px;padding:14px}
+.cch{font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;display:flex;align-items:center;gap:5px}
+.cch .d{width:4px;height:12px;border-radius:2px}
+.csl{margin-bottom:12px}
+.csl label{display:flex;justify-content:space-between;font-size:.66rem;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.csl label span:last-child{color:#fff;font-family:var(--m);font-weight:700;text-transform:none;letter-spacing:0}
+.csl .tk{display:flex;justify-content:space-between;font-size:.55rem;color:var(--t4);margin-top:2px}
+.cnr{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(30,41,59,.5)}
+.cnr label{font-size:.72rem;color:var(--t3)}.cnr .iw{display:flex;align-items:center;gap:3px}
+.cnr .pr,.cnr .su{font-size:.65rem;color:var(--t4)}
+.cs{background:var(--ny3);border:1px solid var(--bd);border-radius:7px;padding:9px;text-align:center}
+.cs.tl{border-color:rgba(20,184,166,.2);background:var(--tg)}.cs.rd{border-color:rgba(239,68,68,.1);background:rgba(239,68,68,.03)}
+.cs.gn{border-color:rgba(16,185,129,.1);background:rgba(16,185,129,.03)}
+.cs .sv{font-size:1.1rem;font-weight:800;font-family:var(--m)}.cs .sl{font-size:.55rem;text-transform:uppercase;letter-spacing:.07em;color:var(--t3);margin-bottom:2px}
+.cs .ss{font-size:.58rem;color:var(--t4);margin-top:2px}
+.cs.tl .sv{color:var(--tl)}.cs.rd .sv{color:var(--rd)}.cs.gn .sv{color:var(--gn)}
+.vg{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;margin:5px 0}
+.vb{font-size:.65rem;padding:5px;border-radius:4px;background:var(--ny3);color:var(--t3);border:1px solid var(--bd);text-align:center;cursor:pointer}
+.vb:hover{border-color:var(--bd2)}.vb.on{background:var(--tg);color:var(--tl);border-color:rgba(20,184,166,.3)}
+.tgg{display:flex;gap:2px;background:var(--ny3);border-radius:5px;padding:2px;border:1px solid var(--bd)}
+.tgb{flex:1;text-align:center;font-size:.68rem;font-weight:600;padding:5px 8px;border-radius:4px;color:var(--t3);background:transparent;cursor:pointer}
+.tgb.on{background:var(--tg);color:var(--tl)}
+.sc{border-radius:8px;padding:14px;border:1px solid}
+.sc.cl{background:rgba(239,68,68,.03);border-color:rgba(239,68,68,.1)}
+.sc.eg{background:rgba(16,185,129,.03);border-color:rgba(16,185,129,.1)}
+.sc.al{background:var(--tg);border-color:rgba(20,184,166,.1)}
+.sc .st{font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+.sc.cl .st{color:var(--rd)}.sc.eg .st{color:var(--gn)}.sc.al .st{color:var(--tl)}
+.sc .sv2{font-size:1.3rem;font-weight:800;font-family:var(--m);margin-bottom:8px}
+.sc.cl .sv2{color:var(--rd)}.sc.eg .sv2{color:var(--gn)}.sc.al .sv2{color:var(--tl)}
+.sc .sr{display:flex;justify-content:space-between;font-size:.7rem;padding:2px 0}
+.sc .sk{color:var(--t3)}.sc .skv{color:var(--t2);font-family:var(--m)}
+.sc .sd{border-top:1px solid rgba(255,255,255,.03);margin:4px 0}
+.sc .sn{font-size:.62rem;color:var(--t4);margin-top:4px}
+.br{margin-bottom:10px}
+.brl{display:flex;justify-content:space-between;font-size:.7rem;margin-bottom:2px}
+.brl span:first-child{color:var(--t3)}.brl span:last-child{font-weight:700;font-family:var(--m)}
+.brt{height:20px;background:var(--ny3);border-radius:4px;overflow:hidden}
+.brf{height:100%;border-radius:4px;transition:width .6s cubic-bezier(.22,1,.36,1)}
+.avz{display:flex;gap:3px;flex-wrap:wrap}
+.avb{flex:1;min-width:28px;max-width:44px;height:28px;background:linear-gradient(180deg,rgba(20,184,166,.16),rgba(20,184,166,.03));border:1px solid rgba(20,184,166,.16);border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:.58rem;font-family:var(--m);color:var(--tl)}
+.dt{width:100%;border-collapse:collapse;font-size:.7rem}
+.dt th{text-align:left;padding:5px;font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--t3);border-bottom:1px solid var(--bd2)}
+.dt th:not(:first-child){text-align:right}
+.dt td{padding:4px 5px;border-bottom:1px solid rgba(30,41,59,.2);font-family:var(--m);color:var(--t3)}
+.dt td:first-child{font-weight:600;color:var(--t2)}.dt td:not(:first-child){text-align:right}
+.dt tr.sel{background:var(--tg)}.dt tr.sel td:first-child{color:var(--tl);font-weight:700}
+.dt tr.ssd td:first-child{color:var(--am)}
+.ckg{display:grid;grid-template-columns:1fr 1fr;gap:2px 8px}
+.cki{display:flex;align-items:center;gap:4px;font-size:.68rem;color:var(--t3);padding:2px 0}
+.cki .c{color:var(--gn);font-weight:700}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav><div class="ctr inner">
+  <div class="nbrand"><div class="nmark">EX</div><div><h1>ExaGrid + Rubrik</h1><span>Tiered Backup Storage Solution</span></div></div>
+  <div class="nlinks"><a href="#overview">Overview</a><a href="#architecture">Architecture</a><a href="#benefits">Benefits</a><a href="#comparison">Comparison</a><a href="#security">Security</a><a href="#calculator">Calculator</a><a href="#next-steps">Next Steps</a></div>
+  <span class="nbadge">ANS & ExaGrid</span>
+</div></nav>
+
+<!-- HERO -->
+<section class="hero" id="overview"><div class="ctr">
+  <h2>Optimize Backup Storage Economics</h2>
+  <div class="sub">ExaGrid Tiered Backup Storage for Rubrik Environments</div>
+  <p>ExaGrid attaches behind Rubrik as an on-premise archive target — not a rip-and-replace. Rubrik stays in place. ExaGrid extends it with additional deduplication, faster restores, ransomware resilience, and dramatically lower TCO versus cloud archive.</p>
+  <div class="hstats">
+    <div class="hstat"><div class="num" style="color:var(--tl)">3:1–10:1</div><div class="lbl">Additional Dedup</div></div>
+    <div class="hstat"><div class="num" style="color:var(--gn)">6:1–20:1</div><div class="lbl">Combined Ratio</div></div>
+    <div class="hstat"><div class="num" style="color:var(--am)">up to 90%</div><div class="lbl">Storage Reduction</div></div>
+  </div>
+</div></section>
+
+<!-- ARCHITECTURE -->
+<section class="sec" id="architecture"><div class="ctr">
+  <h2>How It Works</h2>
+  <p style="max-width:680px;margin-bottom:6px">Rubrik compressed and deduplicated data is sent to ExaGrid via Rubrik Instant Archive for further deduplication. ExaGrid replicates to a second site for DR with up to 50:1 WAN efficiency.</p>
+  <div class="arch">
+    <div class="abox rb"><h4 style="color:var(--t)">Rubrik</h4><p>On-Prem Appliance<br>Most Recent 2 Weeks</p></div>
+    <div class="aarr">→</div>
+    <div class="abox eg"><h4 style="color:var(--tl)">ExaGrid</h4><span class="atier lz">Landing Zone</span><span class="atier rt">Repository Tier</span><p style="margin-top:5px">2 Weeks + Long-Term<br>Retention (wks/mo/yrs)</p></div>
+    <div class="aarr">→</div>
+    <div class="abox rb"><h4 style="color:var(--t)">DR Site</h4><span class="atier rt">Repository Tier</span><p style="margin-top:5px">Replicated Copy<br>Low WAN Bandwidth</p></div>
+  </div>
+  <div class="g3" style="margin-top:20px">
+    <div class="card"><div class="tag" style="background:var(--tg);color:var(--tl)">Landing Zone</div><h3>Fastest Backups & Restores</h3><p style="font-size:.82rem;margin-top:5px">Data lands in a disk-cache for fast ingest. Restores at full disk speed — minutes, not hours from cloud. No egress fees.</p></div>
+    <div class="card"><div class="tag" style="background:rgba(16,185,129,.1);color:var(--gn)">Repository Tier</div><h3>Long-Term Deduplication</h3><p style="font-size:.82rem;margin-top:5px">Adaptive dedup runs in background, achieving 3:1 to 10:1 additional reduction on top of Rubrik's own compression.</p></div>
+    <div class="card"><div class="tag" style="background:rgba(245,158,11,.1);color:var(--am)">Replication</div><h3>DR & Cross-Site Protection</h3><p style="font-size:.82rem;margin-top:5px">Deduplicated data replicates to a second ExaGrid with 50:1 WAN efficiency. Supports up to 16 sites, hub-and-spoke or multi-hop.</p></div>
+  </div>
+</div></section>
+
+<!-- BENEFITS -->
+<section class="sec" id="benefits"><div class="ctr">
+  <h2>Benefits of ExaGrid with Rubrik</h2>
+  <p style="max-width:680px;margin-bottom:24px">ExaGrid improves Rubrik environments across four critical categories.</p>
+  <div class="g4">
+    <div class="card" style="border-top:3px solid var(--tl)"><h3 style="color:var(--tl)">⚡ User Productivity</h3><p style="font-size:.8rem;margin-top:6px">Fast ingest keeps backup windows short. Restores at disk speed from on-premise. Fast VM boots for instant recovery. No cloud egress bottleneck.</p></div>
+    <div class="card" style="border-top:3px solid var(--gn)"><h3 style="color:var(--gn)">🛡️ Business Continuity</h3><p style="font-size:.8rem;margin-top:6px">Non-network-facing Repository Tier for ransomware recovery. DR replication. AI-powered threat detection. Immutable data objects. 3rd-party validated.</p></div>
+    <div class="card" style="border-top:3px solid var(--am)"><h3 style="color:var(--am)">💰 Cost of Ownership</h3><p style="font-size:.8rem;margin-top:6px">Scale-out — pay as you grow. No forklift upgrades, no planned obsolescence. 5-year price protection. Low rack space (2U). Reduced storage through dedup.</p></div>
+    <div class="card" style="border-top:3px solid var(--bl)"><h3 style="color:var(--bl)">🎧 Proactive Support</h3><p style="font-size:.8rem;margin-top:6px">Assigned Level 2 senior engineer — no junior techs. In-theater worldwide support. Health reporting. No hidden costs. +81 NPS. 99% on maintenance.</p></div>
+  </div>
+  <div class="g2" style="margin-top:22px">
+    <div class="card"><h3>Scale-Out Architecture</h3><p style="font-size:.82rem;margin-top:6px;margin-bottom:10px">Each appliance is a full server. Adding appliances increases both capacity and performance linearly — the backup window stays fixed as data grows. Mix and match any age and size. 7-year useful life (HDD) / 5 years (SSD).</p>
+      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:3px">
+        <div style="background:var(--ny3);border:1px solid var(--bd);border-radius:3px;padding:6px;text-align:center;font-size:.58rem;color:var(--tl);font-family:var(--m)">1×<br>84TB</div>
+        <div style="background:var(--ny3);border:1px solid var(--bd);border-radius:3px;padding:6px;text-align:center;font-size:.58rem;color:var(--tl);font-family:var(--m)">2×<br>168TB</div>
+        <div style="background:var(--ny3);border:1px solid var(--bd);border-radius:3px;padding:6px;text-align:center;font-size:.58rem;color:var(--tl);font-family:var(--m)">4×<br>336TB</div>
+        <div style="background:var(--ny3);border:1px solid var(--bd);border-radius:3px;padding:6px;text-align:center;font-size:.58rem;color:var(--tl);font-family:var(--m)">10×<br>840TB</div>
+        <div style="background:var(--ny3);border:1px solid var(--bd);border-radius:3px;padding:6px;text-align:center;font-size:.58rem;color:var(--tl);font-family:var(--m)">16×<br>1.3PB</div>
+        <div style="background:var(--ny3);border:1px solid var(--bd);border-radius:3px;padding:6px;text-align:center;font-size:.58rem;color:var(--tl);font-family:var(--m)">32×<br>2.7PB</div>
+      </div>
+    </div>
+    <div class="card"><h3>All-SSD Option</h3><p style="font-size:.82rem;margin-top:6px;margin-bottom:10px">New SSD appliances deliver fastest backups/restores with lower power. 4 models from 90TB to 540TB usable. Landing Zone is 20% of repository. Can mix SSD primary with HDD at DR for cost optimization.</p>
+      <table class="ctbl" style="font-size:.76rem"><thead><tr><th>Model</th><th>Usable</th><th>Weekly Full</th><th>TB/hr</th></tr></thead>
+      <tbody>
+        <tr><td>EX90-SSD</td><td>108 TB</td><td>90 TB</td><td>115.2</td></tr>
+        <tr><td>EX135-SSD</td><td>161 TB</td><td>135 TB</td><td>115.2</td></tr>
+        <tr><td>EX270-SSD</td><td>323 TB</td><td>270 TB</td><td>115.2</td></tr>
+        <tr><td>EX540-SSD</td><td>645 TB</td><td>540 TB</td><td>115.2</td></tr>
+      </tbody></table>
+    </div>
+  </div>
+</div></section>
+
+<!-- COMPARISON -->
+<section class="sec" id="comparison"><div class="ctr">
+  <h2>Cloud Archive vs. On-Premise ExaGrid</h2>
+  <p style="max-width:680px;margin-bottom:24px">Side-by-side comparison of storing Rubrik archive data in the cloud versus on-premise ExaGrid.</p>
+  <table class="ctbl">
+    <thead><tr><th>Capability</th><th>Rubrik + Cloud Archive</th><th>Rubrik + ExaGrid On-Premise</th></tr></thead>
+    <tbody>
+      <tr><td>Cost Model</td><td>Recurring monthly per-TB charges that compound</td><td>One-time HW purchase + predictable maintenance</td></tr>
+      <tr><td>Egress Fees</td><td class="cx">✗ Charged per GB on restore</td><td class="ck">✓ Zero — all data on-premise</td></tr>
+      <tr><td>Restore Speed</td><td class="cw">⚠ Hours to days</td><td class="ck">✓ Minutes — disk-speed Landing Zone</td></tr>
+      <tr><td>Additional Dedup</td><td class="cx">✗ None — cloud stores as-is</td><td class="ck">✓ 3:1 to 10:1 on top of Rubrik</td></tr>
+      <tr><td>Ransomware Air Gap</td><td class="cw">⚠ Cloud creds can be compromised</td><td class="ck">✓ Non-network-facing tier + immutable objects</td></tr>
+      <tr><td>AI Threat Detection</td><td class="cx">✗ Not available</td><td class="ck">✓ Auto Detect & Guard with AI neural network</td></tr>
+      <tr><td>DR Replication</td><td>Cloud-to-cloud vendor lock-in</td><td class="ck">✓ Site-to-site 50:1 WAN, up to 16 sites</td></tr>
+      <tr><td>Price Predictability</td><td class="cx">✗ Subject to cloud pricing changes + growth</td><td class="ck">✓ 5-year fixed, M&S capped at 3%/yr</td></tr>
+      <tr><td>Sizing Effort</td><td>N/A (pay as you store)</td><td class="ck">✓ 20-min sizing from Rubrik console</td></tr>
+    </tbody>
+  </table>
+</div></section>
+
+<!-- SECURITY -->
+<section class="sec" id="security"><div class="ctr">
+  <h2>Comprehensive Security</h2>
+  <p style="max-width:680px;margin-bottom:24px">Non-network-facing Repository Tier acts as a tiered air gap — a second layer of ransomware protection behind Rubrik.</p>
+  <div class="g2" style="margin-bottom:20px">
+    <div class="card" style="border-left:3px solid var(--gn)"><h3 style="color:var(--gn)">Retention Time-Lock</h3><p style="font-size:.82rem;margin-top:6px">Even if ransomware sends delete commands, the Repository Tier is not impacted. Non-network-facing tier, delayed delete policy, immutable data objects — data is always ready to restore.</p></div>
+    <div class="card" style="border-left:3px solid var(--am)"><h3 style="color:var(--am)">AI Auto Detect & Guard</h3><p style="font-size:.82rem;margin-top:6px">Built-in AI neural network monitors delete patterns. On abnormal detection: alerts fire, delayed delete extends indefinitely, all objects stay immutable. IT team investigates and clears when ready.</p></div>
+  </div>
+  <div class="sgrid">
+    <div class="sitem"><span class="si">✓</span>Drive-Level Encryption</div>
+    <div class="sitem"><span class="si">✓</span>External Key Management</div>
+    <div class="sitem"><span class="si">✓</span>WAN Encryption</div>
+    <div class="sitem"><span class="si">✓</span>Secure Protocols & SMB Signing</div>
+    <div class="sitem"><span class="si">✓</span>IP-based Whitelist</div>
+    <div class="sitem"><span class="si">✓</span>SSH Key Support</div>
+    <div class="sitem"><span class="si">✓</span>RBAC Access Control</div>
+    <div class="sitem"><span class="si">✓</span>Two-Factor Authentication</div>
+    <div class="sitem"><span class="si">✓</span>HTTPS with TLS</div>
+    <div class="sitem"><span class="si">✓</span>Security Officer Role</div>
+    <div class="sitem"><span class="si">✓</span>Comprehensive Monitoring</div>
+    <div class="sitem"><span class="si">✓</span>Immutable Data Objects</div>
+  </div>
+  <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
+    <span class="tag" style="background:rgba(59,130,246,.1);color:var(--bl);font-size:.68rem;padding:5px 12px">DORA</span>
+    <span class="tag" style="background:rgba(59,130,246,.1);color:var(--bl);font-size:.68rem;padding:5px 12px">GDPR</span>
+    <span class="tag" style="background:rgba(59,130,246,.1);color:var(--bl);font-size:.68rem;padding:5px 12px">NIS 2 Directive</span>
+    <span class="tag" style="background:rgba(59,130,246,.1);color:var(--bl);font-size:.68rem;padding:5px 12px">STIG Listed Vendor</span>
+  </div>
+</div></section>
+
+<!-- CREDIBILITY -->
+<section class="sec" id="credibility"><div class="ctr">
+  <h2>Why ExaGrid</h2>
+  <p style="max-width:680px;margin-bottom:22px">100% focused on backup storage for over 18 years. The largest independent vendor with industry-highest satisfaction.</p>
+  <div class="srow">
+    <div class="scard tl"><div class="sv">18+</div><div class="sl">Years Shipping</div></div>
+    <div class="scard tl"><div class="sv">5,000+</div><div class="sl">Customers</div></div>
+    <div class="scard tl"><div class="sv">+81</div><div class="sl">NPS Score</div></div>
+    <div class="scard tl"><div class="sv">95%</div><div class="sl">Retention</div></div>
+    <div class="scard tl"><div class="sv">83%</div><div class="sl">POC Win Rate</div></div>
+    <div class="scard tl"><div class="sv">STIG</div><div class="sl">Listed</div></div>
+  </div>
+  <p style="font-size:.75rem;color:var(--t4);margin-top:14px;font-style:italic">Trusted by: U.S. Army, Air Force, NASA, U.S. Courts, EPA, Kaiser Permanente, Pfizer, Barclays, Airbus, Northrop Grumman. Winner of the most backup storage industry awards 2023–2025.</p>
+</div></section>
+
+<!-- CALCULATOR -->
+<section class="sec" id="calculator"><div class="ctr">
+  <h2>Interactive Cost & Sizing Calculator</h2>
+  <p style="max-width:680px;margin-bottom:20px">Enter your environment data to see real-time cost comparison. All figures adjustable.</p>
+  <div id="cbox">
+    <div class="chdr">
+      <div style="font-size:.82rem;font-weight:700;color:#fff">Rubrik + ExaGrid Calculator</div>
+      <div class="ctabs"><button class="ctab on" onclick="cT('s')">Sizing</button><button class="ctab" onclick="cT('c')">Cost</button><button class="ctab" onclick="cT('d')">Config</button></div>
+    </div>
+    <div class="cbody">
+      <div id="cban"></div>
+      <div id="ct-s"></div><div id="ct-c" style="display:none"></div><div id="ct-d" style="display:none"></div>
+    </div>
+  </div>
+</div></section>
+
+<!-- NEXT STEPS -->
+<section class="cta sec" id="next-steps"><div class="ctr">
+  <h2 style="color:#fff">Recommended Next Steps</h2>
+  <p style="max-width:580px;margin:0 auto 28px">From evaluation to production in weeks.</p>
+  <div class="steps">
+    <div class="step"><div class="stepn">1</div><h4>20-Min Sizing Call</h4><p>Data from Rubrik console — no scripts, no admin creds, no disruption.</p></div>
+    <div class="step"><div class="stepn">2</div><h4>Cost Comparison</h4><p>ExaGrid runs calculator with your actual data to show exact savings.</p></div>
+    <div class="step"><div class="stepn">3</div><h4>On-Site POC</h4><p>Validate with Rubrik in your environment. Installs in 30 min to 3 hrs.</p></div>
+    <div class="step"><div class="stepn">4</div><h4>Production Deploy</h4><p>Scale-out. No forklift upgrades. 5-year price protection.</p></div>
+  </div>
+</div></section>
+
+<footer><div class="ctr">
+  <p>ExaGrid Systems &bull; 100 Campus Drive, Marlborough, MA 01752 &bull; (800) 868-6985 &bull; <a href="https://exagrid.com">exagrid.com</a></p>
+  <p>Prepared by ANS (DVBE-Certified, Sacramento CA) & ExaGrid</p>
+</div></footer>
+
+<script>
+// DATA
+const H=[{m:"EX10",r:32,u:20,w:10,t:3.9},{m:"EX20",r:64,u:40,w:20,t:4.4},{m:"EX36",r:96,u:72,w:36,t:7.9},{m:"EX54",r:162,u:108,w:54,t:5.8},{m:"EX81",r:216,u:162,w:81,t:8.7},{m:"EX84",r:192,u:168,w:84,t:15.25},{m:"EX135",r:324,u:270,w:135,t:14.5},{m:"EX189",r:432,u:378,w:189,t:20.3}];
+const D=[{m:"EX90-SSD",r:131,u:108,w:90,t:115.2},{m:"EX135-SSD",r:184,u:161,w:135,t:115.2},{m:"EX270-SSD",r:369,u:323,w:270,t:115.2},{m:"EX540-SSD",r:737,u:645,w:540,t:115.2}];
+const V=[{n:"AWS S3",c:13},{n:"Azure",c:13},{n:"Wasabi",c:7},{n:"Backblaze",c:7},{n:"MSP",c:7},{n:"Custom",c:10}];
+let S={fb:250,gr:10,yr:3,dc:5,rw:4,rd:3,aw:24,vi:0,cc:10,rc:200000,rm:0,ep:52000,em:0,ac:150000,sd:false};
+const $=s=>document.querySelector(s);
+const fm=n=>"$"+Math.round(n).toLocaleString();
+const ft=n=>n>=1e3?(n/1e3).toFixed(2)+" PB":n.toFixed(1)+" TB";
+
+function sz(q,s){const c=s?D:H;let b=null;for(const a of[...c].reverse()){const n=Math.ceil(q/a.u);if(n>=1&&n<=32){const o=n*a.u;if(!b||n<b.n||(n===b.n&&o<b.o))b={...a,n,o,tr:n*a.r,tt:n*a.t}}}return b}
+
+function X(){
+  const cr=S.dc/100,g=S.fb*Math.pow(1+S.gr/100,S.yr),rs=Math.floor(S.rw*6/64),ro=(g/2)+(g/2*rs)+(g*cr*6*S.rw);
+  const as=Math.floor(S.aw*6/64),ct=(g/2)+(g/2*as)+(g*cr*6*S.aw);
+  const cp=V[S.vi].n==="Custom"?S.cc:V[S.vi].c,cm=ct*cp,ctt=cm*12*S.yr;
+  const er=ct/4,ec=sz(er,S.sd),eh=ec?ec.n*S.ep:0,et=S.em*S.yr;
+  const ar=ct/3.5,ac=sz(ar,S.sd),ah=ac?ac.n*S.ep:0;
+  const rt=S.rm*S.yr,rC=S.rc+rt+ctt,rE=S.rc+rt+eh+et,aE=S.ac+ah+et;
+  const sv=rC-rE,pc=rC>0?sv/rC*100:0;
+  return{g,ro,rs,ct,cp,cm,ctt,er,ec,eh,et,ac,ah,rC,rE,aE,sv,pc,as,rt};
+}
+
+function sl(k,l,v,mn,mx,st,f){return'<div class="csl"><label><span>'+l+'</span><span>'+f(v)+'</span></label><input type="range" min="'+mn+'" max="'+mx+'" step="'+st+'" value="'+v+'" data-k="'+k+'"><div class="tk"><span>'+f(mn)+'</span><span>'+f(mx)+'</span></div></div>'}
+function nr(k,l,p,s,mn,mx,st){return'<div class="cnr"><label>'+l+'</label><div class="iw">'+(p?'<span class="pr">'+p+'</span>':'')+'<input type="number" value="'+S[k]+'" min="'+mn+'" max="'+mx+'" step="'+st+'" data-k="'+k+'">'+(s?'<span class="su">'+s+'</span>':'')+'</div></div>'}
+
+function R(){
+  const c=X(),mx=Math.max(c.rC,c.rE,c.aE,1);
+  // Banner
+  $("#cban").innerHTML='<div><div class="cbl">'+S.yr+'-Year Savings</div><div class="cbsav">'+fm(c.sv)+'</div></div><div class="cbvs"><div><div class="n" style="color:var(--rd)">'+fm(c.rC)+'</div><div class="l">Rubrik + Cloud</div></div><div style="font-size:1.2rem;color:var(--t4)">→</div><div><div class="n" style="color:var(--gn)">'+fm(c.rE)+'</div><div class="l">Rubrik + ExaGrid</div></div></div><div class="cbp"><div class="n">'+c.pc.toFixed(0)+'%</div><div class="l">Reduction</div></div>';
+
+  // SIZING TAB
+  $("#ct-s").innerHTML='<div class="cg3"><div class="cc"><div class="cch"><span class="d" style="background:var(--tl)"></span>Environment</div>'+
+    sl("fb","Full Backup",S.fb,10,2000,10,v=>v+" TB")+
+    sl("gr","Annual Growth",S.gr,0,50,1,v=>v+"%")+
+    sl("yr","Projection",S.yr,1,7,1,v=>v+" yr"+(v>1?"s":""))+
+    sl("dc","Daily Change",S.dc,1,30,1,v=>v+"%")+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px"><div class="cs tl"><div class="sl">Grown Backup</div><div class="sv">'+ft(c.g)+'</div><div class="ss">After '+S.yr+' yrs</div></div><div class="cs tl"><div class="sl">On-Prem</div><div class="sv">'+ft(c.ro)+'</div><div class="ss">'+S.rw+'-wk ret</div></div></div></div>'+
+    '<div class="cc"><div class="cch"><span class="d" style="background:var(--am)"></span>Rubrik Config</div>'+
+    sl("rw","On-Prem Retention",S.rw,1,12,1,v=>v+" wks")+
+    '<div style="padding:8px;background:rgba(245,158,11,.04);border:1px solid rgba(245,158,11,.08);border-radius:6px;margin:8px 0;font-size:.72rem"><strong style="color:var(--am)">'+c.rs+' synthetic full(s)</strong> <span style="color:var(--t3)">per '+S.rw+'-wk cycle</span></div>'+
+    '<div class="cch" style="margin-top:12px"><span class="d" style="background:var(--rd)"></span>Cloud Archive</div>'+
+    sl("aw","Archive Retention",S.aw,4,104,4,v=>v>=52?Math.floor(v/52)+"yr "+v%52+"wk":v+" wks")+
+    '<div style="font-size:.68rem;font-weight:600;color:var(--t3);text-transform:uppercase;margin-bottom:4px">Cloud Vendor</div>'+
+    '<div class="vg">'+V.map((v,i)=>'<button class="vb'+(S.vi===i?' on':'')+'" onclick="S.vi='+i+';R()">'+v.n+(v.n!=="Custom"?" ($"+v.c+")":"")+'</button>').join("")+'</div>'+
+    (S.vi===5?nr("cc","Custom Cost","$","/TB/mo",1,50,1):"")+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px"><div class="cs rd"><div class="sl">Cloud Storage</div><div class="sv">'+ft(c.ct)+'</div><div class="ss">'+S.aw+'wk + '+c.as+' synths</div></div><div class="cs rd"><div class="sl">Monthly Cloud</div><div class="sv">'+fm(c.cm)+'</div><div class="ss">$'+c.cp+'/TB/mo</div></div></div></div>'+
+    '<div class="cc"><div class="cch"><span class="d" style="background:var(--gn)"></span>ExaGrid Sizing</div>'+
+    '<div style="margin-bottom:10px"><div style="font-size:.68rem;color:var(--t3);margin-bottom:4px">Appliance Type</div><div class="tgg"><button class="tgb'+(!S.sd?" on":"")+'" onclick="S.sd=false;R()">HDD</button><button class="tgb'+(S.sd?" on":"")+'" onclick="S.sd=true;R()">SSD</button></div></div>'+
+    '<div class="cs gn" style="margin-bottom:10px"><div class="sl">ExaGrid Storage Required</div><div class="sv" style="font-size:1.3rem">'+ft(c.er)+'</div><div class="ss">After ~4:1 dedup on Rubrik data</div></div>'+
+    (c.ec?'<div style="padding:10px;background:rgba(16,185,129,.04);border:1px solid rgba(16,185,129,.08);border-radius:6px;margin-bottom:8px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:.62rem;font-weight:700;color:var(--gn);text-transform:uppercase">Recommended</span><span style="font-size:.8rem;font-weight:700;color:var(--gn);font-family:var(--m)">'+c.ec.n+'× '+c.ec.m+'</span></div><div style="font-size:.72rem;display:grid;grid-template-columns:1fr 1fr;gap:2px 10px"><span style="color:var(--t4)">Usable</span><span style="text-align:right;color:var(--t2);font-family:var(--m)">'+ft(c.ec.o)+'</span><span style="color:var(--t4)">Throughput</span><span style="text-align:right;color:var(--t2);font-family:var(--m)">'+c.ec.tt.toFixed(1)+' TB/hr</span><span style="color:var(--t4)">Rack</span><span style="text-align:right;color:var(--t2);font-family:var(--m)">'+c.ec.n*2+'U</span><span style="color:var(--t4)">Combined Dedup</span><span style="text-align:right;color:var(--tl);font-family:var(--m);font-weight:700">'+(c.ct/c.er*S.rd).toFixed(0)+':1</span></div></div><div style="padding:8px;background:var(--ny3);border:1px solid var(--bd);border-radius:6px"><div style="font-size:.62rem;color:var(--t4);margin-bottom:4px">Scale-Out</div><div class="avz">'+Array.from({length:Math.min(c.ec.n,10)}).map((_,i)=>'<div class="avb">'+(i+1)+'</div>').join("")+(c.ec.n>10?'<span style="font-size:.65rem;color:var(--t4);align-self:center">+'+( c.ec.n-10)+'</span>':'')+'</div></div>':'')+'</div></div>';
+
+  // COST TAB
+  $("#ct-c").innerHTML='<div class="cg12"><div class="cc"><div class="cch"><span class="d" style="background:var(--tl)"></span>Pricing</div>'+
+    nr("rc","Rubrik Appliance","$","",10000,5e6,10000)+
+    nr("rm","Rubrik Maint/yr","$","/yr",0,5e5,5000)+
+    nr("ep","ExaGrid/Appliance","$","",10000,2e5,1000)+
+    nr("em","ExaGrid Maint/yr","$","/yr",0,2e5,1000)+
+    nr("ac","Alt Backup App","$","",0,2e6,5000)+
+    '<div style="font-size:.68rem;color:var(--t4);margin-top:6px;font-style:italic">Veeam, Commvault, HYCU, etc.</div></div><div>'+
+    '<div class="cg3" style="margin-bottom:14px">'+
+    '<div class="sc cl"><div class="st">Rubrik + Cloud</div><div class="sv2">'+fm(c.rC)+'</div><div class="sr"><span class="sk">Rubrik HW</span><span class="skv">'+fm(S.rc)+'</span></div><div class="sr"><span class="sk">Rubrik M&S</span><span class="skv">'+fm(c.rt)+'</span></div><div class="sd"></div><div class="sr"><span class="sk" style="color:var(--rd)">Cloud</span><span class="skv" style="color:var(--rd);font-weight:700">'+fm(c.ctt)+'</span></div><div class="sn">'+ft(c.ct)+' @ $'+c.cp+'/TB/mo × '+S.yr*12+' mo</div></div>'+
+    '<div class="sc eg"><div class="st">Rubrik + ExaGrid</div><div class="sv2">'+fm(c.rE)+'</div><div class="sr"><span class="sk">Rubrik HW</span><span class="skv">'+fm(S.rc)+'</span></div><div class="sr"><span class="sk">Rubrik M&S</span><span class="skv">'+fm(c.rt)+'</span></div><div class="sd"></div><div class="sr"><span class="sk" style="color:var(--gn)">ExaGrid</span><span class="skv" style="color:var(--gn);font-weight:700">'+fm(c.eh)+'</span></div><div class="sr"><span class="sk">ExaGrid M&S</span><span class="skv">'+fm(c.et)+'</span></div>'+(c.ec?'<div class="sn">'+c.ec.n+'× '+c.ec.m+' @ '+fm(S.ep)+' ea</div>':'')+'</div>'+
+    '<div class="sc al"><div class="st">Alt App + ExaGrid</div><div class="sv2">'+fm(c.aE)+'</div><div class="sr"><span class="sk">Backup App</span><span class="skv">'+fm(S.ac)+'</span></div><div class="sd"></div><div class="sr"><span class="sk" style="color:var(--tl)">ExaGrid</span><span class="skv" style="color:var(--tl);font-weight:700">'+fm(c.ah)+'</span></div><div class="sr"><span class="sk">ExaGrid M&S</span><span class="skv">'+fm(c.et)+'</span></div>'+(c.ac?'<div class="sn">'+c.ac.n+'× '+c.ac.m+'</div>':'')+'</div></div>'+
+    '<div class="cc"><div style="font-size:.68rem;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px">'+S.yr+'-Year TCO</div>'+
+    '<div class="br"><div class="brl"><span>Rubrik + Cloud</span><span style="color:var(--rd)">'+fm(c.rC)+'</span></div><div class="brt"><div class="brf" style="width:'+(c.rC/mx*100).toFixed(1)+'%;background:var(--rd)"></div></div></div>'+
+    '<div class="br"><div class="brl"><span>Rubrik + ExaGrid</span><span style="color:var(--gn)">'+fm(c.rE)+'</span></div><div class="brt"><div class="brf" style="width:'+(c.rE/mx*100).toFixed(1)+'%;background:var(--gn)"></div></div></div>'+
+    '<div class="br"><div class="brl"><span>Alt + ExaGrid</span><span style="color:var(--tl)">'+fm(c.aE)+'</span></div><div class="brt"><div class="brf" style="width:'+(c.aE/mx*100).toFixed(1)+'%;background:var(--tl)"></div></div></div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:12px"><div class="cs gn"><div class="sl">Savings</div><div class="sv">'+fm(c.sv)+'</div></div><div class="cs gn"><div class="sl">Reduction</div><div class="sv">'+c.pc.toFixed(0)+'%</div></div><div class="cs rd"><div class="sl">Monthly Burn</div><div class="sv">'+fm(c.cm)+'</div><div class="ss">Eliminated</div></div></div></div></div></div>';
+
+  // DETAILS TAB
+  var all=[...H,...D],sm=c.ec?c.ec.m:"";
+  $("#ct-d").innerHTML='<div class="cg3"><div class="cc" style="grid-column:span 2"><div class="cch"><span class="d" style="background:var(--am)"></span>Appliance Catalog</div><table class="dt"><thead><tr><th>Model</th><th>Raw</th><th>Usable</th><th>Wk Full</th><th>TB/hr</th></tr></thead><tbody>'+all.map(a=>'<tr class="'+(a.m===sm?"sel":"")+(a.m.includes("SSD")?" ssd":"")+'"><td>'+a.m+(a.m===sm?" ←":"")+'</td><td>'+a.r+'</td><td>'+a.u+'</td><td>'+a.w+'</td><td>'+a.t+'</td></tr>').join("")+'</tbody></table></div><div class="cc"><div class="cch"><span class="d" style="background:var(--gn)"></span>Security</div><div class="ckg">'+["Drive Encryption","Key Management","WAN Encryption","IP Whitelist","SSH Keys","RBAC","2FA","HTTPS/TLS","Security Officer","Monitoring","DORA","GDPR","NIS 2","STIG Listed"].map(x=>'<div class="cki"><span class="c">✓</span>'+x+'</div>').join("")+'</div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:12px"><div class="cs tl"><div class="sl">NPS</div><div class="sv">+81</div></div><div class="cs tl"><div class="sl">Customers</div><div class="sv">5K+</div></div><div class="cs tl"><div class="sl">Retention</div><div class="sv">95%</div></div></div></div></div>';
+
+  bind();
+}
+
+function bind(){document.querySelectorAll("#cbox input[data-k]").forEach(el=>{el.addEventListener("input",e=>{S[e.target.dataset.k]=Number(e.target.value);R()})})}
+function cT(id){["s","c","d"].forEach(t=>{document.getElementById("ct-"+t).style.display=t===id?"block":"none"});document.querySelectorAll(".ctab").forEach((el,i)=>{el.classList.toggle("on",["s","c","d"][i]===id)});R()}
+R();
+</script>
+</body></html>
